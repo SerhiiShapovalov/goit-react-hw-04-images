@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import fetchImages from '../services/images-api';
@@ -8,96 +8,85 @@ import Button from 'components/Button';
 import Loader from 'components/Loader';
 import Modal from 'components/Modal/Modal';
 
-class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    totalImages: 0,
-    isLoading: false,
-    images: [],
-    error: null,
-    modalData: null,
-  };
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState([]);
+  const [modalData, setModalData] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
+  useEffect(() => {
+    const fetchImagesData = async () => {
+      try {
+        setIsLoading(true);
 
-    if (prevState.query !== query || prevState.page !== page) {
-      this.setState({ isLoading: true });
+        const { hits, totalHits } = await fetchImages(query, page);
 
-      fetchImages(query, page)
-        .then(({ hits, totalHits }) => {
-          if (!totalHits) {
-            alert(`Oops... there are no images matching your search... `);
-            return;
-          }
-          const imagesArray = hits.map(hit => ({
-            id: hit.id,
-            description: hit.tags,
-            smallImage: hit.webformatURL,
-            largeImage: hit.largeImageURL,
-          }));
+        if (!totalHits) {
+          alert(`Oops... there are no images matching your search...`);
+          return;
+        }
 
-          this.setState(({ images }) => {
-            return {
-              images: [...images, ...imagesArray],
-              totalImages: totalHits,
-            };
-          });
-        })
-        .catch(error => this.setState({ error }))
-        .finally(() => this.setState({ isLoading: false }));
+        const imagesArray = hits.map(hit => ({
+          id: hit.id,
+          description: hit,
+          smallImage: hit.webformatURL,
+          largeImage: hit.largeImageURL,
+        }));
+
+        setImages(prevImages => [...prevImages, ...imagesArray]);
+        setTotalImages(totalHits);
+      } catch (error) {
+        console.log('~ file: App.jsx:44 ~ fetchData ~ error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (query !== '' && (page === 1 || page > 1)) {
+      fetchImagesData();
     }
-  }
+  }, [query, page]);
 
-  getSearchRequest = query => {
-    this.setState({ query, page: 1, images: [], totalImages: 0 });
+  const getSearchRequest = query => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
+    setTotalImages(0);
   };
 
-  onNextFetch = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const onNextFetch = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  toggleModal = (modalData = null) => {
-    this.setState({ modalData });
+  const toggleModal = (modalData = null) => {
+    setModalData(modalData);
   };
 
-  render() {
-    const {
-      images,      
-      totalImages,
-      isLoading,      
-      // currentImageUrl,
-      // currentImageDescription,
-      modalData,
-    } = this.state;
+  return (
+    <>
+      <Searchbar onSubmit={getSearchRequest} />
 
-    return (
-      <>
-        <Searchbar onSubmit={this.getSearchRequest} />
+      {images && <ImageGallery images={images} openModal={toggleModal} />}
 
-        {images && (
-          <ImageGallery images={images} openModal={this.toggleModal} />
-        )}
+      {isLoading && <Loader />}
 
-        {isLoading && <Loader />}
+      {!isLoading && images.length !== totalImages && (
+        <Button onNextFetch={onNextFetch} />
+      )}
 
-        {!isLoading && images.length !== totalImages && (
-          <Button onNextFetch={this.onNextFetch} />
-        )}
+      {modalData && (
+        <Modal
+          onClose={toggleModal}
+          currentImageUrl={modalData.largeImage}
+          currentImageDescription={modalData.description}
+        />
+      )}
 
-        {modalData && (
-          <Modal
-            onClose={this.toggleModal}
-            currentImageUrl={modalData.largeImage}
-            currentImageDescription={modalData.description}
-          />
-        )}
-
-        <ToastContainer />
-      </>
-    );
-  }
-}
+      <ToastContainer />
+    </>
+  );
+};
 
 export default App;
