@@ -53,7 +53,7 @@ import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
 import css from './Modal.module.css';
 
-export function Modal({ modalData, onModalClose }) {
+export default function Modal({ modalData, onModalClose }) {
   const { currentImageUrl, currentImageDescription } = modalData;
 
   useEffect(() => {
@@ -93,5 +93,3 @@ Modal.propTypes = {
   }),
   onModalClose: PropTypes.func.isRequired,
 };
-
-export default Modal;
