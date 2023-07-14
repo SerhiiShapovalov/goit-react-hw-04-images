@@ -87,9 +87,6 @@ export default function Modal({ modalData, onModalClose }) {
 }
 
 Modal.propTypes = {
-  modalData: PropTypes.shape({
-    currentImageUrl: PropTypes.string.isRequired,
-    currentImageDescription: PropTypes.string.isRequired,
-  }),
+  modalData: PropTypes.object.isRequired,
   onModalClose: PropTypes.func.isRequired,
 };

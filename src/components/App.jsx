@@ -17,6 +17,8 @@ const App = () => {
   const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
+    if (!query) return;
+
     const fetchImagesData = async () => {
       try {
         setIsLoading(true);
@@ -43,10 +45,7 @@ const App = () => {
         setIsLoading(false);
       }
     };
-
-    if (query !== '' && (page === 1 || page > 1)) {
-      fetchImagesData();
-    }
+    fetchImagesData();
   }, [query, page]);
 
   const getSearchRequest = query => {
@@ -78,9 +77,11 @@ const App = () => {
 
       {modalData && (
         <Modal
-          onClose={toggleModal}
-          currentImageUrl={modalData.largeImage}
-          currentImageDescription={modalData.description}
+          onModalClose={toggleModal}
+          modalData={{
+            currentImageUrl: modalData.largeImage,
+            currentImageDescription: modalData.description,
+          }}
         />
       )}
 
